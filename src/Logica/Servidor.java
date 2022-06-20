@@ -6,98 +6,111 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class Servidor implements Runnable{
+public class Servidor {
 
-    private ServerSocket servidor;
+    private ServerSocket serverSocket;
     private String ip = "localhost";
+    private int puerto = 5313;
 
-    private Socket cliente;
+    private Socket socket;
 
-    private Socket miServidor;
-    public ObjectInputStream datosEntrada;
-    public ObjectOutputStream datosSalida;
-    private int puerto;
-    private boolean yourTurn;
-    private boolean circle;
+    private DataOutputStream datosSalida;
 
+    public DataOutputStream getDatosSalida() {
+        return datosSalida;
+    }
+
+    public void setDatosSalida(DataOutputStream datosSalida) {
+        this.datosSalida = datosSalida;
+    }
+
+    public DataInputStream getDatosEntrada() {
+        return datosEntrada;
+    }
+
+    public void setDatosEntrada(DataInputStream datosEntrada) {
+        this.datosEntrada = datosEntrada;
+    }
+
+    private DataInputStream datosEntrada;
+    private boolean unableToCommunicateWithOpponent;
     private boolean activado;
-    public Triki estadoTriki;
-    public OutputStream outStream;
+
+    public boolean isAceptado() {
+        return aceptado;
+    }
+
+    public void setAceptado(boolean aceptado) {
+        this.aceptado = aceptado;
+    }
+
+    private boolean aceptado = false;
+
+    public boolean isYourTurn() {
+        return yourTurn;
+    }
+
+    public void setYourTurn(boolean yourTurn) {
+        this.yourTurn = yourTurn;
+    }
+
+    private boolean yourTurn;
+
+    public boolean isCircle() {
+        return circle;
+    }
+
+    public void setCircle(boolean circle) {
+        this.circle = circle;
+    }
+
+    private boolean circle;
 
     public Servidor() {
         activado = false;
-        puerto = 5612;
+        puerto = 5313;
     }
 
     public void activar(boolean b) {
         activado = b;
     }
 
+    public void escucharClientes() throws IOException, ClassNotFoundException {
+        Socket socket = null;
 
-    public void run() {
-
-                try {
-                    this.escucharClientes();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
-
-
+        try {
+            socket = this.serverSocket.accept();
+            this.datosSalida = new DataOutputStream(socket.getOutputStream());
+            this.datosEntrada = new DataInputStream(socket.getInputStream());
+            this.aceptado = true;
+            System.out.println("CLIENT HAS REQUESTED TO JOIN, AND WE HAVE ACCEPTED");
+        } catch (IOException var3) {
+            var3.printStackTrace();
+        }
     }
 
-    public void escucharClientes() throws IOException, ClassNotFoundException {
-        Socket cliente = null;
-
-        cliente = this.servidor.accept();
-        datosSalida =  new ObjectOutputStream(cliente.getOutputStream());
-
-        datosEntrada =new ObjectInputStream(cliente.getInputStream());
-        System.out.println("CLIENT HAS REQUESTED TO JOIN, AND WE HAVE ACCEPTED");
-//        activado = true;
-        while (activado) {
-
-
-            estadoTriki = (Triki) datosEntrada.readObject();
-            System.out.println(estadoTriki);
-
-//        InputStream inStream = cliente.getInputStream();
-            outStream = cliente.getOutputStream();
-
-            datosSalida.writeObject(estadoTriki);
+    public boolean conectar() {
+        try {
+            this.socket = new Socket(this.ip, this.puerto);
+            this.datosSalida = new DataOutputStream(this.socket.getOutputStream());
+            this.datosEntrada = new DataInputStream(this.socket.getInputStream());
+            this.aceptado = true;
+        } catch (IOException var2) {
+            System.out.println("Unable to connect to the address: " + this.ip + ":" + this.puerto + " | Starting a server");
+            return false;
         }
 
-
-
-
+        System.out.println("Successfully connected to the server.");
+        return true;
     }
 
     public void initializeServer() {
         try {
-            servidor = new ServerSocket(puerto, 8, InetAddress.getByName(ip));
+            this.serverSocket = new ServerSocket(puerto, 8, InetAddress.getByName(ip));
         } catch (Exception e) {
             e.printStackTrace();
         }
         yourTurn = true;
         circle = false;
     }
-
-    // *********** Funcion para unirse al juego ***********
-
-//    private boolean iniciar() {
-//        try {
-//            miServidor = new Socket(ip, puerto);
-//            datosEntrada = new DataInputStream(miServidor.getInputStream());
-//            datosSalida = new DataOutputStream(miServidor.getOutputStream());
-//            activado = true;
-//        } catch (IOException e) {
-//            System.out.println("Unable to connect to the address: " + ip + ":" + puerto + " | Starting a server");
-//            return false;
-//        }
-//        System.out.println("Successfully connected to the server.");
-//        return true;
-//    }
-
-
 }

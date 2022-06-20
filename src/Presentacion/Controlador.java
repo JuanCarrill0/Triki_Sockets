@@ -50,22 +50,6 @@ public class Controlador implements MouseMotionListener, MouseListener{
         if(e.getSource() instanceof Canvas){
             modelo.mostrarCeldaSeleccionada(e.getX(), e.getY());
             modelo.establecerTurnoJugado();
-
-            var out = new PrintWriter(new OutputStreamWriter(modelo.getAppServidor().outStream, StandardCharsets.UTF_8) ,true);
-            out.println("El objeto enviado es" + modelo.getMiSistema());
-
-            try {
-//                System.out.println("Cual id se esta enviando?:" + modelo.getMiSistema());
-
-
-                modelo.getAppServidor().datosSalida.writeObject(modelo.getMiSistema());
-
-
-
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-
         }
     }
 
