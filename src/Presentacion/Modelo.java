@@ -13,6 +13,9 @@ import java.awt.image.BufferedImage;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -32,7 +35,7 @@ public class Modelo implements Runnable{
 
 
     public Modelo(){
-        config = new ConfiguracionDibujo(); 
+        config = new ConfiguracionDibujo();
         getMiSistema().setActivo(true);
         hiloDibujo = new Thread(this);
         
@@ -45,19 +48,9 @@ public class Modelo implements Runnable{
         return appServidor;
     }
 
-
-    public void iniciarServidor() throws IOException, ClassNotFoundException {
-
-        getAppServidor().initializeServer();
-        getAppServidor().activar(true);
-        getAppServidor().escucharClientes();
-        getAppServidor().activar(false);
-    }
-    
     public void iniciar(){
         getVentana().setVisible(true);
         hiloDibujo.start();
-
     }
     
     public Vista getVentana(){
@@ -70,14 +63,7 @@ public class Modelo implements Runnable{
     }
 
     public Triki getMiSistema() {
-
-        if(triki==null){
-            triki = new Triki();
-            System.out.println("Este es la primera instancia: " + triki);
-        }
-        if (getAppServidor().estadoTriki != null){
-            triki = getAppServidor().estadoTriki;
-        }
+        if(triki==null) triki = new Triki();
         return triki;
     }
     
@@ -132,8 +118,50 @@ public class Modelo implements Runnable{
             if(getMiSistema().hacerMovimiento(cs.f, cs.c)!= true){
                 getVentana().mostrarMensaje("Espacio ya tomado!");
             }
+
+            try {
+                // Envia el numero de la celda en la conexion para establecer el turno con el conectado
+
+                String strnmbr_fila = getMiSistema().getCeldaSeleccionada().f.toString();
+                String strnmbr_columna = getMiSistema().getCeldaSeleccionada().c.toString();
+                String union_fc = strnmbr_fila + strnmbr_columna;
+                System.out.println("Este es el numero a enviar:" + union_fc);
+
+                this.getAppServidor().getDatosSalida().writeUTF(union_fc);
+                this.getAppServidor().getDatosSalida().flush();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            getAppServidor().setYourTurn(false);
+
             determinarGanador();
         }
+    }
+
+    private void tick() {
+
+        Punto2D cs = getMiSistema().getCeldaSeleccionada();
+        List<Integer> posicion = new ArrayList<Integer>();
+
+        if (!getAppServidor().isYourTurn()) {
+            try {
+                String espacio = getAppServidor().getDatosEntrada().readUTF();
+
+                System.out.println("El espacio es:" + espacio);
+
+                getMiSistema().hacerMovimiento(Integer.parseInt(String.valueOf(espacio.charAt(0))), Integer.parseInt(String.valueOf(espacio.charAt(1))));
+
+                determinarGanador();
+                getAppServidor().setYourTurn(true);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+
+            }
+        }
+
     }
 
     @Override
@@ -142,19 +170,39 @@ public class Modelo implements Runnable{
         dobleBuffer = new BufferedImage(lienzo.getWidth(), lienzo.getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics lapizCanvas = lienzo.getGraphics();
         Graphics lapiz = dobleBuffer.getGraphics();
+
+        if(!getAppServidor().conectar()) {
+            getAppServidor().initializeServer();
+        }
+
+        if (!getAppServidor().isCircle() && !getAppServidor().isAceptado()) {
+            try {
+                getAppServidor().escucharClientes();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         while(getMiSistema().isActivo()){
+
+            this.tick();
+
             lapiz.fillRect(40, 310, 200, 50);
             lapiz.setColor(Color.black);
             dibujarTablero(lapiz);
             dibujarValoresTablero(lapiz);
             dibujarTurnos(lapiz);
+            lapizCanvas.drawImage(dobleBuffer, 0, 0, lienzo);
+
             if(getReiniciar() == true){
                 reiniciarJuego(lapiz);
                 setReiniciar(false);
             }
-            lapizCanvas.drawImage(dobleBuffer, 0, 0, lienzo);   
+
         }
-        
+
     }
     
     public void dibujarTablero(Graphics lapiz){

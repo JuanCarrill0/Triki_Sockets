@@ -19,7 +19,6 @@ public class Launcher {
      public Launcher() throws IOException, ClassNotFoundException {
         miTriki = new Modelo();
         miTriki.iniciar();
-        miTriki.iniciarServidor();
     }
     
     public static void main(String args[]) throws IOException, ClassNotFoundException {
