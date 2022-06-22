@@ -16,12 +16,12 @@ public class Launcher {
     
     private final Modelo miTriki;
     
-     public Launcher() throws IOException, ClassNotFoundException {
+     public Launcher() throws IOException {
         miTriki = new Modelo();
         miTriki.iniciar();
     }
     
-    public static void main(String args[]) throws IOException, ClassNotFoundException {
+    public static void main(String args[]) throws IOException {
         new Launcher();
     }
     

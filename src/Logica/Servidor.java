@@ -11,6 +11,9 @@ public class Servidor {
     private ServerSocket serverSocket;
     private String ip = "localhost";
     private int puerto = 5313;
+    
+    private String ipCliente;
+    private String puertoCliente;
 
     private Socket socket;
 
@@ -34,15 +37,6 @@ public class Servidor {
 
     private DataInputStream datosEntrada;
     private boolean unableToCommunicateWithOpponent;
-
-    public boolean isActivado() {
-        return activado;
-    }
-
-    public void setActivado(boolean activado) {
-        this.activado = activado;
-    }
-
     private boolean activado;
 
     public boolean isAceptado() {
@@ -51,6 +45,19 @@ public class Servidor {
 
     public void setAceptado(boolean aceptado) {
         this.aceptado = aceptado;
+    }
+    
+    public void setSocket(String ipCliente, String puertoCliente){
+        this.ipCliente = ipCliente;
+        this.puertoCliente = puertoCliente;
+    }
+    
+    public String getIpCliente(){
+        return ipCliente;
+    }
+    
+    public String getPuertoCliente(){
+        return puertoCliente;
     }
 
     private boolean aceptado = false;
@@ -84,13 +91,13 @@ public class Servidor {
         activado = b;
     }
 
-    public void escucharClientes(){
-        Socket socket = null;
+    public void escucharClientes() throws IOException, ClassNotFoundException {
+        Socket socketCliente = new Socket(getIpCliente(),Integer.valueOf(getPuertoCliente()));
 
         try {
             socket = this.serverSocket.accept();
-            this.datosSalida = new DataOutputStream(socket.getOutputStream());
-            this.datosEntrada = new DataInputStream(socket.getInputStream());
+            this.datosSalida = new DataOutputStream(socketCliente.getOutputStream());
+            this.datosEntrada = new DataInputStream(socketCliente.getInputStream());
             this.aceptado = true;
             System.out.println("CLIENT HAS REQUESTED TO JOIN, AND WE HAVE ACCEPTED");
         } catch (IOException var3) {

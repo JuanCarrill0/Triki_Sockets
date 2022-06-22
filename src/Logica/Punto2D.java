@@ -11,5 +11,5 @@ import java.io.Serializable;
  * @author Juan
  */
 public class Punto2D implements Serializable {
-    public Integer f, c;
+    public int f, c;
 }
