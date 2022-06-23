@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Triki_Sockets">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/Triki_Sockets-main/Triki_Sockets/dist/Triki_Sockets.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
