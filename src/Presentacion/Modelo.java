@@ -26,7 +26,7 @@ public class Modelo implements Runnable{
     private Vista ventana;
     private ConfiguracionDibujo config;
     private boolean reiniciar;
-    
+
     private Canvas lienzo;
     private Thread hiloDibujo;
     private BufferedImage dobleBuffer;
@@ -38,7 +38,7 @@ public class Modelo implements Runnable{
         config = new ConfiguracionDibujo();
         getMiSistema().setActivo(true);
         hiloDibujo = new Thread(this);
-        
+
     }
 
     public Servidor getAppServidor() {
@@ -49,10 +49,25 @@ public class Modelo implements Runnable{
     }
 
     public void iniciar(){
+        Canvas lienzo = getVentana().getLienzo();
+        dobleBuffer = new BufferedImage(lienzo.getWidth(), lienzo.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics lapiz = dobleBuffer.getGraphics();
+
         getVentana().setVisible(true);
         hiloDibujo.start();
+        new Thread(new Runnable() {
+            public void run() {
+                while(true)
+                {
+                    lapiz.setColor(Color.black);
+                    dibujarValoresTablero(lapiz);
+                    dibujarTurnos(lapiz);
+
+                }
+            }
+        }).start();
     }
-    
+
     public Vista getVentana(){
         if(ventana==null){
             ventana = new Vista(this);
@@ -66,30 +81,31 @@ public class Modelo implements Runnable{
         if(triki==null) triki = new Triki();
         return triki;
     }
-    
+
     public boolean getReiniciar(){
         return reiniciar;
     }
-    
+
     public void setReiniciar(boolean reiniciar){
         this.reiniciar = reiniciar;
     }
-    
+
     public void determinarGanador(){
 	char Ganador = getMiSistema().encontrarGanador();
-        System.out.println("Ganador -> "+ Ganador);
+
 	if (Ganador != ' ') {
 		getVentana().mostrarMensaje("Jugador " + Ganador + " Ganó!");
 	}
-
 	if (getMiSistema().esEmpate()) {
 		getVentana().mostrarMensaje("Empate!");
 	}
     }
+
     public void mostrarCeldaSeleccionada(int mx, int my){
         boolean dentro = false;
+        System.out.println("Entré");
         if(mx > config.getInicioTableroX() && mx < config.getInicioTableroX()+(3*config.getAnchoCelda())){
-            if(my > config.getInicioTableroY() && my < config.getInicioTableroY()+(3*config.getAltoCelda())){                
+            if(my > config.getInicioTableroY() && my < config.getInicioTableroY()+(3*config.getAltoCelda())){
                 dentro = true;
             }else{
                 dentro = false;
@@ -97,7 +113,7 @@ public class Modelo implements Runnable{
         }else{
             dentro = false;
         }
-        
+
         if(dentro){
             getMiSistema().getCeldaSeleccionada().f = (int)(my - config.getInicioTableroY())/config.getAltoCelda();
             System.out.println(getMiSistema().getCeldaSeleccionada().f);
@@ -107,54 +123,68 @@ public class Modelo implements Runnable{
             getMiSistema().getCeldaSeleccionada().f = -1;
             getMiSistema().getCeldaSeleccionada().c = -1;
         }
-        //System.out.println("x: " + mx + ", y: " + my);
-            
     }
+
     public void establecerTurnoJugado(){
-        int n;
+
         Punto2D cs = getMiSistema().getCeldaSeleccionada();
-    
-        if(cs.f != -1 && cs.c != -1){
+
+        if(cs.f != -1 && cs.c != -1 ){
+
             if(getMiSistema().hacerMovimiento(cs.f, cs.c)!= true){
                 getVentana().mostrarMensaje("Espacio ya tomado!");
             }
+            System.out.println("El servidor esta activado:" + getAppServidor().isActivado());
 
-            try {
-                // Envia el numero de la celda en la conexion para establecer el turno con el conectado
+            if (getAppServidor().isActivado() && getAppServidor().isYourTurn()) {
+                enviarTurno();
 
-                String strnmbr_fila = getMiSistema().getCeldaSeleccionada().f.toString();
-                String strnmbr_columna = getMiSistema().getCeldaSeleccionada().c.toString();
-                String union_fc = strnmbr_fila + strnmbr_columna;
-                System.out.println("Este es el numero a enviar:" + union_fc);
-
-                this.getAppServidor().getDatosSalida().writeUTF(union_fc);
-                this.getAppServidor().getDatosSalida().flush();
-
-            } catch (IOException e) {
-                e.printStackTrace();
+            } else {
+                getVentana().mostrarMensaje("No es tu turno!");
             }
 
-            getAppServidor().setYourTurn(false);
-
-            determinarGanador();
         }
+
+    }
+
+    private void enviarTurno()  {
+
+        try {
+            // Envia el numero de la celda en la conexion para establecer el turno con el conectado
+
+            String strnmbr_fila = getMiSistema().getCeldaSeleccionada().f.toString();
+            String strnmbr_columna = getMiSistema().getCeldaSeleccionada().c.toString();
+            String union_fc = strnmbr_fila + strnmbr_columna;
+            System.out.println("Este es el numero a enviar:" + union_fc);
+
+            this.getAppServidor().getDatosSalida().writeUTF(union_fc);
+            this.getAppServidor().getDatosSalida().flush();
+
+            getAppServidor().setYourTurn(false);
+            System.out.println("El turno en ESTABLECER() ahora es:" + getAppServidor().isYourTurn());
+            determinarGanador();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void tick() {
 
-        Punto2D cs = getMiSistema().getCeldaSeleccionada();
-        List<Integer> posicion = new ArrayList<Integer>();
-
         if (!getAppServidor().isYourTurn()) {
+
             try {
                 String espacio = getAppServidor().getDatosEntrada().readUTF();
 
                 System.out.println("El espacio es:" + espacio);
 
-                getMiSistema().hacerMovimiento(Integer.parseInt(String.valueOf(espacio.charAt(0))), Integer.parseInt(String.valueOf(espacio.charAt(1))));
+                getMiSistema().hacerMovimiento(leerTurno(espacio, 0), leerTurno(espacio, 1));
 
                 determinarGanador();
+
                 getAppServidor().setYourTurn(true);
+                System.out.println("El turno en TICK() ahora es:" + getAppServidor().isYourTurn());
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -164,47 +194,57 @@ public class Modelo implements Runnable{
 
     }
 
+    private int leerTurno(String espacio, int lugar){
+        return Integer.parseInt(String.valueOf(espacio.charAt(lugar)));
+    }
+
     @Override
     public void run() {
+
+        inicializarServidor();
+        escucharConexion();
+        getAppServidor().setActivado(true);
+
+        while(getMiSistema().isActivo()){
+            this.tick();
+            canvasTurnos();
+        }
+
+    }
+
+    private void canvasTurnos ( ) {
         Canvas lienzo = getVentana().getLienzo();
         dobleBuffer = new BufferedImage(lienzo.getWidth(), lienzo.getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics lapizCanvas = lienzo.getGraphics();
         Graphics lapiz = dobleBuffer.getGraphics();
 
+        lapiz.fillRect(40, 310, 200, 50);
+        lapiz.setColor(Color.black);
+        dibujarTablero(lapiz);
+        dibujarValoresTablero(lapiz);
+        dibujarTurnos(lapiz);
+
+        if(getReiniciar() == true){
+            reiniciarJuego(lapiz);
+            setReiniciar(false);
+        }
+
+        lapizCanvas.drawImage(dobleBuffer, 0, 0, lienzo);
+    }
+
+    private void inicializarServidor(){
         if(!getAppServidor().conectar()) {
             getAppServidor().initializeServer();
         }
-
-        if (!getAppServidor().isCircle() && !getAppServidor().isAceptado()) {
-            try {
-                getAppServidor().escucharClientes();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        while(getMiSistema().isActivo()){
-
-            this.tick();
-
-            lapiz.fillRect(40, 310, 200, 50);
-            lapiz.setColor(Color.black);
-            dibujarTablero(lapiz);
-            dibujarValoresTablero(lapiz);
-            dibujarTurnos(lapiz);
-            lapizCanvas.drawImage(dobleBuffer, 0, 0, lienzo);
-
-            if(getReiniciar() == true){
-                reiniciarJuego(lapiz);
-                setReiniciar(false);
-            }
-
-        }
-
     }
-    
+    private void escucharConexion()  {
+        if (!getAppServidor().isCircle() && !getAppServidor().isAceptado()) {
+
+                getAppServidor().escucharClientes();
+
+        }
+    }
+
     public void dibujarTablero(Graphics lapiz){
         int pY, pX;
         for (int y = 1; y <= 2 ; y++) {

@@ -34,6 +34,15 @@ public class Servidor {
 
     private DataInputStream datosEntrada;
     private boolean unableToCommunicateWithOpponent;
+
+    public boolean isActivado() {
+        return activado;
+    }
+
+    public void setActivado(boolean activado) {
+        this.activado = activado;
+    }
+
     private boolean activado;
 
     public boolean isAceptado() {
@@ -75,7 +84,7 @@ public class Servidor {
         activado = b;
     }
 
-    public void escucharClientes() throws IOException, ClassNotFoundException {
+    public void escucharClientes(){
         Socket socket = null;
 
         try {
