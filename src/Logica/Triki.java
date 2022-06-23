@@ -39,6 +39,7 @@ public class Triki implements Serializable {
         public Celda getTriki(int f, int c){
             return tablero[f][c];
         }
+
 	public Celda[][] getTablero(){
 		return tablero;
 	}

@@ -5,15 +5,14 @@
 package Presentacion;
 
 
+import Logica.Celda;
+
 import java.awt.Canvas;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 
 /**
  *
@@ -21,12 +20,15 @@ import java.nio.charset.StandardCharsets;
  */
 public class Controlador implements MouseMotionListener, MouseListener{
     
-    private final Vista ventana;
+    private final VistaJuego ventanaJuego;
+    private final VistaMenu ventanaMenu;
     private final Modelo modelo;
     
-    public Controlador(Vista v){
-        ventana = v;
-        modelo= v.getMiModelo();
+    
+    public Controlador(VistaJuego Juego, VistaMenu Menu){
+        ventanaJuego = Juego;
+        ventanaMenu = Menu;
+        modelo= Juego.getMiModelo();
     }
     
 

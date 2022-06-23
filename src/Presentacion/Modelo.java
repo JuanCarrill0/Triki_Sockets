@@ -10,10 +10,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,9 +20,11 @@ import java.util.List;
  */
 public class Modelo implements Runnable{
     private Triki triki;
-    private Vista ventana;
+    private VistaJuego ventanaJuego;
+    private VistaMenu ventanaMenu;
     private ConfiguracionDibujo config;
     private boolean reiniciar;
+    public int numeroServidor = 1;
 
     private Canvas lienzo;
     private Thread hiloDibujo;
@@ -43,12 +42,15 @@ public class Modelo implements Runnable{
 
     public Servidor getAppServidor() {
         if(appServidor == null){
-            appServidor = new Servidor();
+            if(this.ventanaJuego != null){
+                appServidor = new Servidor();
+            }
         }
         return appServidor;
     }
 
     public void iniciar(){
+        getVentanaMenu().setVisible(true);
         Canvas lienzo = getVentana().getLienzo();
         dobleBuffer = new BufferedImage(lienzo.getWidth(), lienzo.getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics lapiz = dobleBuffer.getGraphics();
@@ -68,17 +70,32 @@ public class Modelo implements Runnable{
         }).start();
     }
 
-    public Vista getVentana(){
-        if(ventana==null){
-            ventana = new Vista(this);
-            ventana.setTitle("TRIKI");
-            ventana.setResizable(false);
+    public VistaJuego getVentanaJuego(){
+        if(ventanaJuego==null){
+            ventanaJuego = new VistaJuego(this);
+            ventanaJuego.setTitle("TRIKI");
+            ventanaJuego.setResizable(false);
         }
-        return ventana;
+        return ventanaJuego;
     }
 
-    public Triki getMiSistema() {
-        if(triki==null) triki = new Triki();
+    public VistaMenu getVentanaMenu(){
+        if(ventanaMenu == null){
+            ventanaMenu = new VistaMenu(this);
+            ventanaMenu.setTitle("Menu TRIKI");
+            ventanaMenu.setResizable(false);
+        }
+        return ventanaMenu;
+    }
+
+    public Thread getHiloDibujo(){
+        return this.hiloDibujo;
+    }
+
+    public Triki getMiSistema(){
+        if(triki==null){
+            triki = new Triki();
+        }
         return triki;
     }
 
@@ -94,10 +111,12 @@ public class Modelo implements Runnable{
 	char Ganador = getMiSistema().encontrarGanador();
 
 	if (Ganador != ' ') {
-		getVentana().mostrarMensaje("Jugador " + Ganador + " Ganó!");
+		getVentanaJuego().mostrarMensaje("Jugador " + Ganador + " Ganó!");
+                setReiniciar(true);
 	}
 	if (getMiSistema().esEmpate()) {
-		getVentana().mostrarMensaje("Empate!");
+		getVentanaJuego().mostrarMensaje("Empate!");
+                setReiniciar(true);
 	}
     }
 
@@ -132,7 +151,7 @@ public class Modelo implements Runnable{
         if(cs.f != -1 && cs.c != -1 ){
 
             if(getMiSistema().hacerMovimiento(cs.f, cs.c)!= true){
-                getVentana().mostrarMensaje("Espacio ya tomado!");
+                getVentanaJuego().mostrarMensaje("Espacio ya tomado!");
             }
             System.out.println("El servidor esta activado:" + getAppServidor().isActivado());
 
@@ -200,6 +219,7 @@ public class Modelo implements Runnable{
 
     @Override
     public void run() {
+        Canvas lienzo = getVentanaJuego().getLienzo();
 
         inicializarServidor();
         escucharConexion();
@@ -216,6 +236,38 @@ public class Modelo implements Runnable{
         Canvas lienzo = getVentana().getLienzo();
         dobleBuffer = new BufferedImage(lienzo.getWidth(), lienzo.getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics lapizCanvas = lienzo.getGraphics();
+        Graphics lapiz = dobleBuffer.getGraphics();
+
+        if(!getAppServidor().conectar()) {
+            getAppServidor().initializeServer();
+        }
+
+        if (!getAppServidor().isCircle() && !getAppServidor().isAceptado()) {
+            try {
+                getAppServidor().escucharClientes();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        while(getMiSistema().isActivo()){
+            this.tick();
+
+            lapiz.fillRect(40, 310, 200, 50);
+            dibujarTablero(lapiz);
+            dibujarValoresTablero(lapiz);
+            dibujarTurnos(lapiz);
+
+            if(getReiniciar() == true){
+                reiniciarJuego(lapiz);
+                setReiniciar(false);
+            }
+
+            lapizCanvas.drawImage(dobleBuffer, 0, 0, lienzo);
+        }
+
         Graphics lapiz = dobleBuffer.getGraphics();
 
         lapiz.fillRect(40, 310, 200, 50);
@@ -275,7 +327,7 @@ public class Modelo implements Runnable{
 			for (int Columna = 0; Columna < 3; Columna++) {
                             for (int f = 0; f < 3; f++) {
                                 for (int c = 0; c < 3; c++) {
-                                    lapiz.setColor(new Color(238,238,238));
+                                    lapiz.setColor(new Color(5,0,87));
                                     int pX =config.getInicioTableroX()+(c*config.getAnchoCelda());
                                     int pY =config.getInicioTableroY() + (f*config.getAltoCelda());
                                     lapiz.fillRect(pX, pY, 100, 100);
@@ -298,6 +350,7 @@ public class Modelo implements Runnable{
                 char v = getMiSistema().getTriki(f, c).getInfo();
                 int pX = 20 + config.getInicioTableroX()+(c*config.getAnchoCelda());
                 int pY = 40 + config.getInicioTableroY() + (f*config.getAltoCelda());
+                lapiz.setColor(Color.white);
                 lapiz.drawString(v == 0 ? "" : "" + v, pX, pY);
             }
         }

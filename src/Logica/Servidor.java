@@ -12,6 +12,9 @@ public class Servidor {
     private String ip = "localhost";
     private int puerto = 5313;
 
+    private String ipCliente;
+    private String puertoCliente;
+
     private Socket socket;
 
     private DataOutputStream datosSalida;
@@ -51,6 +54,19 @@ public class Servidor {
 
     public void setAceptado(boolean aceptado) {
         this.aceptado = aceptado;
+    }
+
+    public void setSocket(String ipCliente, String puertoCliente){
+        this.ipCliente = ipCliente;
+        this.puertoCliente = puertoCliente;
+    }
+
+    public String getIpCliente(){
+        return ipCliente;
+    }
+
+    public String getPuertoCliente(){
+        return puertoCliente;
     }
 
     private boolean aceptado = false;
