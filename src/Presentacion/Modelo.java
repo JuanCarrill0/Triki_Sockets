@@ -51,11 +51,11 @@ public class Modelo implements Runnable{
 
     public void iniciar(){
         getVentanaMenu().setVisible(true);
-        Canvas lienzo = getVentana().getLienzo();
+        Canvas lienzo = getVentanaJuego().getLienzo();
         dobleBuffer = new BufferedImage(lienzo.getWidth(), lienzo.getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics lapiz = dobleBuffer.getGraphics();
 
-        getVentana().setVisible(true);
+//        getVentanaJuego().setVisible(true);
         hiloDibujo.start();
         new Thread(new Runnable() {
             public void run() {
@@ -159,7 +159,7 @@ public class Modelo implements Runnable{
                 enviarTurno();
 
             } else {
-                getVentana().mostrarMensaje("No es tu turno!");
+                getVentanaJuego().mostrarMensaje("No es tu turno!");
             }
 
         }
@@ -233,41 +233,9 @@ public class Modelo implements Runnable{
     }
 
     private void canvasTurnos ( ) {
-        Canvas lienzo = getVentana().getLienzo();
+        Canvas lienzo = getVentanaJuego().getLienzo();
         dobleBuffer = new BufferedImage(lienzo.getWidth(), lienzo.getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics lapizCanvas = lienzo.getGraphics();
-        Graphics lapiz = dobleBuffer.getGraphics();
-
-        if(!getAppServidor().conectar()) {
-            getAppServidor().initializeServer();
-        }
-
-        if (!getAppServidor().isCircle() && !getAppServidor().isAceptado()) {
-            try {
-                getAppServidor().escucharClientes();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        while(getMiSistema().isActivo()){
-            this.tick();
-
-            lapiz.fillRect(40, 310, 200, 50);
-            dibujarTablero(lapiz);
-            dibujarValoresTablero(lapiz);
-            dibujarTurnos(lapiz);
-
-            if(getReiniciar() == true){
-                reiniciarJuego(lapiz);
-                setReiniciar(false);
-            }
-
-            lapizCanvas.drawImage(dobleBuffer, 0, 0, lienzo);
-        }
-
         Graphics lapiz = dobleBuffer.getGraphics();
 
         lapiz.fillRect(40, 310, 200, 50);

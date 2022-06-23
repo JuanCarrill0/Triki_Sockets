@@ -10,7 +10,7 @@ public class Servidor {
 
     private ServerSocket serverSocket;
     private String ip = "localhost";
-    private int puerto = 5313;
+    private int puerto ;
 
     private String ipCliente;
     private String puertoCliente;

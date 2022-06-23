@@ -37,7 +37,7 @@ public class Vista extends javax.swing.JFrame {
     
     public Controlador getControl(){
         if(control == null){
-            control = new Controlador(this);
+            control = new Controlador( null,null);
         }
         return control;
     }

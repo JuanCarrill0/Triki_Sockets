@@ -245,8 +245,9 @@ public class VistaMenu extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton1MouseClicked
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        String Direccion[] = ip.getText().split(":");
-        getAppServidor().setSocket(Direccion[0], Direccion[1]);
+        String direccion[] = ip.getText().split(":");
+        System.out.println(direccion[0]+ "Puerto: "+  direccion[1]);
+        getAppServidor().setSocket(direccion[0], direccion[1]);
         getMiModelo().getHiloDibujo().start();
         
     }//GEN-LAST:event_jButton2ActionPerformed
