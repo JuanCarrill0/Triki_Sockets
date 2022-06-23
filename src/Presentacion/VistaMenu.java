@@ -5,10 +5,12 @@
 package Presentacion;
 
 import Logica.Servidor;
-import java.awt.Graphics;
-import java.awt.Image;
+
+import java.awt.*;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
+
+import static java.lang.Integer.parseInt;
 
 /**
  *
@@ -123,7 +125,8 @@ public class VistaMenu extends javax.swing.JFrame {
 
         jButton1.setBackground(new java.awt.Color(255, 102, 102));
         jButton1.setFont(new java.awt.Font("Lucida Console", 0, 12)); // NOI18N
-        jButton1.setText("Iniciar Juego");
+        jButton1.setForeground(Color.white);
+        jButton1.setText("Iniciar Juego Local");
         jButton1.setFocusPainted(false);
         jButton1.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -135,6 +138,7 @@ public class VistaMenu extends javax.swing.JFrame {
                 jButton1ActionPerformed(evt);
             }
         });
+
 
         jLabel2.setFont(new java.awt.Font("Lucida Console", 0, 12)); // NOI18N
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
@@ -246,8 +250,10 @@ public class VistaMenu extends javax.swing.JFrame {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         String direccion[] = ip.getText().split(":");
-        System.out.println(direccion[0]+ "Puerto: "+  direccion[1]);
+        System.out.println(direccion[0]+ "Puerto: "+  parseInt(direccion[1]));
         getAppServidor().setSocket(direccion[0], direccion[1]);
+        getMiModelo().getVentanaJuego().setVisible(true);
+        getMiModelo().getVentanaMenu().setVisible(false);
         getMiModelo().getHiloDibujo().start();
         
     }//GEN-LAST:event_jButton2ActionPerformed
