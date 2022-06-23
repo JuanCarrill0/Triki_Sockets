@@ -22,6 +22,7 @@ public class Controlador implements MouseMotionListener, MouseListener{
     
     private final VistaJuego ventanaJuego;
     private final VistaMenu ventanaMenu;
+
     private final Modelo modelo;
     
     
@@ -30,6 +31,8 @@ public class Controlador implements MouseMotionListener, MouseListener{
         ventanaMenu = Menu;
         modelo= Juego.getMiModelo();
     }
+
+
     
 
     public void actionPerformed(ActionEvent e) {
